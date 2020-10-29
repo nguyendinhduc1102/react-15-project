@@ -1,12 +1,54 @@
-import React from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 
+const url = 'https://www.thecocktaildb.com/api/json/v1/1/search.php?s='
+const AppContext = React.createContext()
+const AppProvider = ({children}) => {
+    const [loading, setLoading] = useState(true)
+    const [searchTerm, setSearchTerm] = useState('a')
+    const [cocktails, setCocktails] = useState([])
 
-const AppProvide = ({children}) => {
+    const fetchDrinks = async ()=>{
+        try {
+            const response = await fetch(`${url}${searchTerm}`)
+            const data = await response.json()
+            const {drinks} = data
+            if (drinks) {
+                const newCocktails = drinks.map((item)=>{
+                    const {idDrink,strDrink,strDrinkThumb,strAlcoholic,strGlass}= item
+                    return {
+                        id:idDrink,
+                        name:strDrink,
+                        image:strDrinkThumb,
+                        info:strAlcoholic,
+                        glass:strGlass
+                    }
+                })
+                setCocktails(newCocktails)
+            }else{
+                setCocktails([])
+            }
+            setLoading(false )
+            console.log(data);
+        } catch (error) {
+            console.log(error);
+            setLoading(false)
+        }
+    }
+    useEffect(() => {
+        fetchDrinks()
+    }, [searchTerm])
     return (
-        <div>
-            
-        </div>
+       <AppContext.Provider value={{
+           loading,
+           
+           cocktails,
+           setSearchTerm,
+       }}>
+           {children}
+       </AppContext.Provider>
     )
 }
-
-export default AppProvide
+export const useGlobalContext = ()=>{
+    return useContext(AppContext)
+}
+export { AppContext , AppProvider }
